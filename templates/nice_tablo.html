@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarm System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #alarmOffButton {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #alarmOffButton:hover {
+            background-color: #ff1a1a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Alarm System</h1>
+        <table id="detectionTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Detected Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for message in messages %}
+                    <tr>
+                       
+                        <td> <img id="detectedImage" src={{message.name}} alt="Detected Image" width="640" height="480"></td>
+                        <td>{{ message.surname }}</td>
+                        <td>{{ message.time }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button id="alarmOffButton">Turn Off Alarm</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var socket = io();
+            var isim= "";
+            var soyisim= "";
+
+            socket.on('update_table', function(data) {
+                console.log('Table updated:', data);
+                var table = document.getElementById("detectionTable").getElementsByTagName('tbody')[0];
+                var newRow = table.insertRow();
+                var nameCell = newRow.insertCell(0);
+                var surnameCell = newRow.insertCell(1);
+                var timeCell = newRow.insertCell(2);
+                nameCell.textContent =data.isim ;
+                surnameCell.textContent =data.soyisim;
+                timeCell.textContent = new Date().toLocaleString();
+            });
+            
+            socket.on('set_names', function(data) {
+                isim = data.isim;
+                soyisim = data.soyisim;
+            });
+
+
+//burası websitesinden geleni servera gönderiyor
+            document.getElementById("alarmOffButton").addEventListener("click", function() {
+                socket.emit('server_message', { isim: isim, soyisim: soyisim });
+                console.log('bu oluyo');
+                
+            });
+        });
+    </script>
+</body>
+</html>

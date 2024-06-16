@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarm System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #alarmOffButton {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #alarmOffButton:hover {
+            background-color: #ff1a1a;
+        }
+
+        #loginForm input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        #loginButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        #loginButton:hover {
+            background-color: #45a049;
+        }
+
+        #logoutButton {
+            background-color: #ff4d4d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+
+        #logoutButton:hover {
+            background-color: #ff1a1a;
+        }
+
+        #alarmSystem {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="loginForm">
+        <h1>Login</h1>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button id="loginButton">Login</button>
+    </div>
+
+    <div class="container" id="alarmSystem">
+        <h1>Alarm System</h1>
+        <table id="detectionTable">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Surname</th>
+                    <th>Detected Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- This will be dynamically populated -->
+            </tbody>
+        </table>
+        <button id="alarmOffButton">Turn Off Alarm</button>
+        <button id="logoutButton">Logout</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var socket = io();
+            var isim = "";
+            var soyisim = "";
+            var tableData = [];
+
+            var loginForm = document.getElementById("loginForm");
+            var alarmSystem = document.getElementById("alarmSystem");
+
+            document.getElementById("loginButton").addEventListener("click", function() {
+                var username = document.getElementById("username").value;
+                var password = document.getElementById("password").value;
+
+                if (username === "admin" && password === "password1") {
+                    loginForm.style.display = "none";
+                    alarmSystem.style.display = "block";
+                    renderTable();
+                } else {
+                    alert("Invalid username or password");
+                }
+            });
+
+            document.getElementById("logoutButton").addEventListener("click", function() {
+                loginForm.style.display = "block";
+                alarmSystem.style.display = "none";
+            });
+
+            socket.on('update_table', function(data) {
+                console.log('Table updated:', data);
+                tableData.push({
+                    name: data.isim,
+                    surname: data.soyisim,
+                    time: new Date().toLocaleString()
+                });
+                if (alarmSystem.style.display === "block") {
+                    renderTable();
+                }
+            });
+
+            socket.on('set_names', function(data) {
+                isim = data.isim;
+                soyisim = data.soyisim;
+            });
+
+            document.getElementById("alarmOffButton").addEventListener("click", function() {
+                socket.emit('server_message', { isim: isim, soyisim: soyisim });
+                console.log('Alarm turned off');
+            });
+
+            function renderTable() {
+                var table = document.getElementById("detectionTable").getElementsByTagName('tbody')[0];
+                table.innerHTML = "";
+                tableData.forEach(function(rowData) {
+                    var newRow = table.insertRow();
+                    var nameCell = newRow.insertCell(0);
+                    var surnameCell = newRow.insertCell(1);
+                    var timeCell = newRow.insertCell(2);
+                    nameCell.textContent = rowData.name;
+                    surnameCell.textContent = rowData.surname;
+                    timeCell.textContent = rowData.time;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
